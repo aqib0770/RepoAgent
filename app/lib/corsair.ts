@@ -1,19 +1,18 @@
-import "dotenv/config";
-import { createCorsair } from "corsair";
-import { github } from "@corsair-dev/github";
-import { Pool } from "pg";
+import 'dotenv/config'
+import { createCorsair } from 'corsair'
+import { github } from '@corsair-dev/github'
+import { Pool } from 'pg'
 
 const db = new Pool({
   connectionString: process.env.DATABASE_URL,
-});
+})
 
 export const corsair = createCorsair({
-  plugins: [github({ authType: "managed" })],
+  plugins: [github({ authType: 'managed' })],
   database: db,
   kek: process.env.CORSAIR_KEK!,
   hub: {
     projectApiKey: process.env.CORSAIR_DEV_API_KEY!,
     signingSecret: process.env.CORSAIR_DEV_SIGNING_SECRET!,
   },
-});
-
+})
