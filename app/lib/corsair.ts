@@ -8,7 +8,13 @@ const db = new Pool({
 })
 
 export const corsair = createCorsair({
-  plugins: [github({ authType: 'oauth_2' })],
+  plugins: [
+    github({
+      authType: 'oauth_2',
+      clientId: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    }),
+  ],
   database: db,
   kek: process.env.CORSAIR_KEK!,
   hub: {
