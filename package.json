@@ -10,9 +10,11 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.30",
     "@corsair-dev/github": "^0.1.15",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "ai": "^7.0.66",
     "corsair": "^0.1.114",
     "dotenv": "^17.4.2",
     "next": "16.3.0",
