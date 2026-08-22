@@ -2,9 +2,10 @@ import 'dotenv/config'
 import { createCorsair } from 'corsair'
 import { github } from '@corsair-dev/github'
 import { Pool } from 'pg'
+import { requireEnv } from './env'
 
 const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: requireEnv('DATABASE_URL'),
 })
 
 export const corsair = createCorsair({
@@ -16,10 +17,10 @@ export const corsair = createCorsair({
     }),
   ],
   database: db,
-  kek: process.env.CORSAIR_KEK!,
+  kek: requireEnv('CORSAIR_KEK'),
   hub: {
-    projectApiKey: process.env.CORSAIR_DEV_API_KEY!,
-    signingSecret: process.env.CORSAIR_DEV_SIGNING_SECRET!,
+    projectApiKey: requireEnv('CORSAIR_DEV_API_KEY'),
+    signingSecret: requireEnv('CORSAIR_DEV_SIGNING_SECRET'),
     allowWorkflowExecution: true,
   },
 })
