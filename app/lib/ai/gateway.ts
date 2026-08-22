@@ -1,5 +1,7 @@
-import { createGateway } from 'ai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
 
-export const gateway = createGateway()
+export const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+})
 
-export const chatModel = gateway(process.env.AI_GATEWAY_MODEL ?? 'anthropic/claude-sonnet-4-5')
+export const chatModel = google(process.env.GOOGLE_MODEL ?? 'gemini-2.0-flash')

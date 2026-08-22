@@ -10,6 +10,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.50",
     "@ai-sdk/react": "^4.0.76",
     "@corsair-dev/github": "^0.1.15",
     "@prisma/adapter-pg": "^7.9.1",
