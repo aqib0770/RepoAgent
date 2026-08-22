@@ -17,13 +17,6 @@ interface ChatRequestBody {
 }
 
 export async function POST(request: Request) {
-  if (!process.env.AI_GATEWAY_API_KEY) {
-    return NextResponse.json(
-      { error: 'AI_GATEWAY_API_KEY is not set. Add it to .env to enable chat.' },
-      { status: 503 },
-    )
-  }
-
   const session = await getSession()
   if (!session) {
     return NextResponse.json({ error: 'No identity. Create one first.' }, { status: 401 })

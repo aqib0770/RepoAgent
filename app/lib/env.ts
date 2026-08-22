@@ -7,7 +7,7 @@ const REQUIRED_SERVER_ENV = [
 
 export type RequiredServerEnv = (typeof REQUIRED_SERVER_ENV)[number]
 
-export function requireEnv(key: RequiredServerEnv | 'AI_GATEWAY_API_KEY' | 'APP_URL'): string {
+export function requireEnv(key: RequiredServerEnv | 'APP_URL'): string {
   const value = process.env[key]
   if (!value) {
     throw new Error(
