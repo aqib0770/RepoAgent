@@ -1,4 +1,4 @@
-import { buildTenantTools, SYSTEM_PROMPT } from '@/app/lib/ai/agent'
+import { buildTenantTools, getWriteToolNames, SYSTEM_PROMPT } from '@/app/lib/ai/agent'
 import { chatModel } from '@/app/lib/ai/gateway'
 import { getSession } from '@/app/lib/session'
 import {
@@ -43,11 +43,16 @@ export async function POST(request: Request) {
 
   const tools = buildTenantTools(session.id)
 
+  const toolApproval = Object.fromEntries(
+    getWriteToolNames().map((toolName) => [toolName, 'user-approval' as const]),
+  )
+
   const result = streamText({
     model: chatModel,
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools,
+    toolApproval,
     stopWhen: ({ steps }) => steps.length >= 15,
   })
 

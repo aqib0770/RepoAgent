@@ -26,6 +26,12 @@ function Spinner() {
 
 function StateIcon({ state }: { state: PartState }) {
   if (state === 'input-streaming' || state === 'input-available') return <Spinner />
+  if (state === 'approval-requested' || state === 'approval-responded')
+    return (
+      <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-warn/15 font-mono text-[10px] text-warn">
+        !
+      </span>
+    )
   if (state === 'output-available')
     return (
       <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-accent/15 font-mono text-[10px] text-accent">
@@ -65,7 +71,13 @@ function summarize(part: AnyToolPart): string | null {
   }
 }
 
-export function ToolCallCard({ part }: { part: AnyToolPart }) {
+export function ToolCallCard({
+  part,
+  onRespond,
+}: {
+  part: AnyToolPart
+  onRespond?: (approved: boolean) => void
+}) {
   const [open, setOpen] = useState(false)
   const name =
     part.type === 'dynamic-tool'
@@ -76,6 +88,21 @@ export function ToolCallCard({ part }: { part: AnyToolPart }) {
   const meta = describeTool(name)
   const style = VERB_STYLE[meta.verb]
   const running = part.state === 'input-streaming' || part.state === 'input-available'
+  const needsApproval =
+    (part.state === 'approval-requested' || part.state === 'approval-responded') &&
+    !part.approval?.isAutomatic
+
+  const statusLabel = running
+    ? 'running'
+    : part.state === 'approval-requested'
+      ? 'needs approval'
+      : part.state === 'approval-responded'
+        ? 'responded'
+        : part.state === 'output-denied'
+          ? 'denied'
+          : part.state === 'output-error'
+            ? 'failed'
+            : 'done'
 
   const inputJson = JSON.stringify(part.input ?? {}, null, 2) ?? ''
   let outputText: string | undefined
@@ -92,9 +119,11 @@ export function ToolCallCard({ part }: { part: AnyToolPart }) {
       className={`fade-rise overflow-hidden rounded-xl border bg-surface/80 ${
         part.state === 'output-error' || summary?.startsWith('Operation failed')
           ? 'border-danger/25'
-          : running
-            ? 'border-line-strong'
-            : 'border-line'
+          : needsApproval
+            ? 'border-warn/40'
+            : running
+              ? 'border-line-strong'
+              : 'border-line'
       }`}
     >
       <button
@@ -112,8 +141,12 @@ export function ToolCallCard({ part }: { part: AnyToolPart }) {
             <span className="ml-2.5 hidden truncate text-xs text-muted sm:inline">{summary}</span>
           )}
         </span>
-        <span className="shrink-0 font-mono text-[11px] uppercase tracking-wide text-faint">
-          {running ? 'running' : part.state === 'output-error' ? 'failed' : 'done'}
+        <span
+          className={`shrink-0 font-mono text-[11px] uppercase tracking-wide ${
+            needsApproval ? 'text-warn' : 'text-faint'
+          }`}
+        >
+          {statusLabel}
         </span>
         <svg
           viewBox="0 0 16 16"
@@ -126,6 +159,30 @@ export function ToolCallCard({ part }: { part: AnyToolPart }) {
         </svg>
       </button>
 
+      {part.state === 'approval-requested' && !part.approval.isAutomatic && onRespond && (
+        <div className="flex items-center justify-between gap-3 border-t border-warn/20 bg-warn/[0.04] px-3.5 py-2.5">
+          <span className="text-xs text-muted">
+            Write operation — approve to let RepoAgent run it.
+          </span>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={() => onRespond(false)}
+              className="rounded-lg border border-danger/40 bg-danger/10 px-3 py-1.5 text-xs font-medium text-danger transition-colors hover:bg-danger/20"
+            >
+              Deny
+            </button>
+            <button
+              type="button"
+              onClick={() => onRespond(true)}
+              className="rounded-lg border border-accent/40 bg-accent-dim px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20"
+            >
+              Approve
+            </button>
+          </div>
+        </div>
+      )}
+
       {open && (
         <div className="space-y-3 border-t border-line px-3.5 py-3">
           <div>
@@ -136,6 +193,17 @@ export function ToolCallCard({ part }: { part: AnyToolPart }) {
               {inputJson || '{}'}
             </pre>
           </div>
+          {part.state === 'output-denied' && (
+            <div>
+              <div className="mb-1.5 font-mono text-[11px] uppercase tracking-wide text-faint">
+                result
+              </div>
+              <pre className="rounded-lg bg-canvas p-3 font-mono text-xs leading-relaxed text-danger">
+                Denied by user — the operation was not executed.
+                {part.approval.reason ? `\n${part.approval.reason}` : ''}
+              </pre>
+            </div>
+          )}
           {outputText !== undefined && (
             <div>
               <div className="mb-1.5 font-mono text-[11px] uppercase tracking-wide text-faint">

@@ -1,7 +1,12 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { DefaultChatTransport, isToolUIPart, UIMessage } from 'ai'
+import {
+  DefaultChatTransport,
+  isToolUIPart,
+  lastAssistantMessageIsCompleteWithApprovalResponses,
+  UIMessage,
+} from 'ai'
 import { useRouter } from 'next/navigation'
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LogoMark } from './logo-mark'
@@ -30,7 +35,11 @@ export function ChatApp({ displayName }: { displayName: string }) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const transport = useMemo(() => new DefaultChatTransport<UIMessage>({ api: '/api/chat' }), [])
-  const { messages, sendMessage, status, stop, error, clearError } = useChat({ transport })
+  const { messages, sendMessage, status, stop, error, clearError, addToolApprovalResponse } =
+    useChat({
+      transport,
+      sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses,
+    })
 
   const busy = status === 'submitted' || status === 'streaming'
 
@@ -174,7 +183,21 @@ export function ChatApp({ displayName }: { displayName: string }) {
               <div className="fade-rise space-y-2">
                 {message.parts.map((part, index) => {
                   if (isToolUIPart(part)) {
-                    return <ToolCallCard key={index} part={part} />
+                    return (
+                      <ToolCallCard
+                        key={index}
+                        part={part}
+                        onRespond={
+                          part.state === 'approval-requested'
+                            ? (approved) =>
+                                void addToolApprovalResponse({
+                                  id: part.approval.id,
+                                  approved,
+                                })
+                            : undefined
+                        }
+                      />
+                    )
                   }
                   if (part.type === 'text' && part.text.trim().length > 0) {
                     return <MarkdownContent key={index} content={part.text} />
