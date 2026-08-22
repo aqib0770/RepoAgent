@@ -1,23 +1,32 @@
 import { buildTenantTools, SYSTEM_PROMPT } from '@/app/lib/ai/agent'
 import { chatModel } from '@/app/lib/ai/gateway'
-import { streamText, type ModelMessage } from 'ai'
+import { getSession } from '@/app/lib/session'
+import {
+  convertToModelMessages,
+  createUIMessageStreamResponse,
+  streamText,
+  toUIMessageStream,
+  type UIMessage,
+} from 'ai'
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 300
 
 interface ChatRequestBody {
-  messages?: ModelMessage[]
-  prompt?: string
-  tenantId?: string
+  messages?: UIMessage[]
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.AI_GATEWAY_API_KEY
-  if (!apiKey) {
+  if (!process.env.AI_GATEWAY_API_KEY) {
     return NextResponse.json(
       { error: 'AI_GATEWAY_API_KEY is not set. Add it to .env to enable chat.' },
       { status: 503 },
     )
+  }
+
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: 'No identity. Create one first.' }, { status: 401 })
   }
 
   let body: ChatRequestBody
@@ -27,23 +36,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const tenantId = body.tenantId ?? 'default_tenant'
-  const messages =
-    body.messages ?? (body.prompt ? [{ role: 'user' as const, content: body.prompt }] : null)
+  const messages = body.messages
   if (!messages || messages.length === 0) {
-    return NextResponse.json(
-      { error: 'Provide either "messages" or "prompt" in the request body.' },
-      { status: 400 },
-    )
+    return NextResponse.json({ error: 'Provide "messages" in the request body.' }, { status: 400 })
   }
+
+  const tools = buildTenantTools(session.id)
 
   const result = streamText({
     model: chatModel,
     system: SYSTEM_PROMPT,
-    messages,
-    tools: buildTenantTools(tenantId),
+    messages: await convertToModelMessages(messages),
+    tools,
     stopWhen: ({ steps }) => steps.length >= 15,
   })
 
-  return result.toTextStreamResponse()
+  return createUIMessageStreamResponse({
+    stream: toUIMessageStream({ stream: result.stream, tools }),
+  })
 }
