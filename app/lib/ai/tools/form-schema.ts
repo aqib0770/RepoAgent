@@ -43,9 +43,5 @@ export function formFieldToJsonSchema(field: FormFieldSchema): Record<string, un
       break
   }
 
-  if (field.optional && base.type) {
-    base.type = Array.isArray(base.type) ? base.type : [base.type, 'null']
-  }
-
   return base
 }
