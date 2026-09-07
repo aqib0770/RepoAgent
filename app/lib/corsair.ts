@@ -8,14 +8,14 @@ const db = new Pool({
   connectionString: requireEnv('DATABASE_URL'),
 })
 
+export const githubPlugin = github({
+  authType: 'oauth_2',
+  clientId: process.env.GITHUB_CLIENT_ID,
+  clientSecret: process.env.GITHUB_CLIENT_SECRET,
+})
+
 export const corsair = createCorsair({
-  plugins: [
-    github({
-      authType: 'oauth_2',
-      clientId: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-    }),
-  ],
+  plugins: [githubPlugin],
   database: db,
   kek: requireEnv('CORSAIR_KEK'),
   hub: {
