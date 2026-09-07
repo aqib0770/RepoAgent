@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@/app/generated/prisma/client'
+import { PrismaClient } from '@/generated/prisma/client'
 import { requireEnv } from './env'
 
 const globalForPrisma = globalThis as unknown as { prisma?: InstanceType<typeof PrismaClient> }
