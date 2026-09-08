@@ -9,9 +9,7 @@ const db = new Pool({
 })
 
 export const githubPlugin = github({
-  authType: 'oauth_2',
-  clientId: process.env.GITHUB_CLIENT_ID,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET,
+  authType: 'managed',
 })
 
 export const corsair = createCorsair({
@@ -19,8 +17,8 @@ export const corsair = createCorsair({
   database: db,
   kek: requireEnv('CORSAIR_KEK'),
   hub: {
-    projectApiKey: requireEnv('CORSAIR_DEV_API_KEY'),
-    signingSecret: requireEnv('CORSAIR_DEV_SIGNING_SECRET'),
+    projectApiKey: requireEnv('CORSAIR_API_KEY'),
+    signingSecret: requireEnv('CORSAIR_SIGNING_SECRET'),
     allowWorkflowExecution: true,
   },
 })
