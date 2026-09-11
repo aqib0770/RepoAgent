@@ -1,4 +1,3 @@
-import 'dotenv/config'
 import { createCorsair } from 'corsair'
 import { github } from '@corsair-dev/github'
 import { Pool } from 'pg'
@@ -6,6 +5,7 @@ import { requireEnv } from './env'
 
 const db = new Pool({
   connectionString: requireEnv('DATABASE_URL'),
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 })
 
 export const githubPlugin = github({
