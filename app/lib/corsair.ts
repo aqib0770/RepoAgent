@@ -1,5 +1,4 @@
 import { createCorsair } from 'corsair'
-import { createCorsairDatabase } from 'corsair/db'
 import { github } from '@corsair-dev/github'
 import { Pool } from 'pg'
 import { requireEnv } from './env'
@@ -10,9 +9,6 @@ const db = new Pool({
   connectionString: requireEnv('DATABASE_URL'),
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 })
-
-// SDK-wrapped handle for key management (DEK init, credential checks).
-export const corsairDatabase = createCorsairDatabase(db)
 
 export const githubPlugin = github({
   authType: 'managed',
