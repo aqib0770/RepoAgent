@@ -3,23 +3,23 @@ import { jsonSchema, tool } from 'ai'
 import { executeOperation, serializeResult } from './tools/executor'
 import { getToolCatalog } from './tools/registry'
 
-export function getWriteToolNames(): string[] {
-  return getToolCatalog()
-    .filter((entry) => entry.riskLevel !== 'read')
-    .map((entry) => entry.toolName)
+export interface TenantTools {
+  tools: ToolSet
+  writeToolNames: string[]
 }
 
-export function buildTenantTools(tenantId: string): ToolSet {
-  const catalog = getToolCatalog()
+export function buildTenantTools(tenantId: string): TenantTools {
   const tools: ToolSet = {}
+  const writeToolNames: string[] = []
 
-  for (const entry of catalog) {
+  for (const entry of getToolCatalog()) {
     const isWrite = entry.riskLevel !== 'read'
+    if (isWrite) writeToolNames.push(entry.toolName)
     tools[entry.toolName] = tool({
       description: isWrite
         ? `${entry.description} WRITE operation — requires explicit user approval before execution.`
         : entry.description,
-      inputSchema: jsonSchema<Record<string, unknown>>(entry.inputSchema as never),
+      inputSchema: jsonSchema(entry.inputSchema),
       execute: async (args) => {
         try {
           const result = await executeOperation(tenantId, entry.path, args)
@@ -34,7 +34,7 @@ export function buildTenantTools(tenantId: string): ToolSet {
     })
   }
 
-  return tools
+  return { tools, writeToolNames }
 }
 
 export const SYSTEM_PROMPT = `You are RepoAgent, an assistant that operates the user's connected integrations (currently GitHub) on their behalf.
