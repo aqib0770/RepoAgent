@@ -19,9 +19,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 })
   }
 
-  const displayName =
-    typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 40) : ''
-  if (!displayName) {
+  const displayName = typeof body.displayName === 'string' ? body.displayName.trim() : ''
+  if (!displayName || displayName.length > 40) {
     return NextResponse.json(
       { error: 'displayName is required (1-40 characters).' },
       { status: 400 },
