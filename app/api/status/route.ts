@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/app/lib/db'
+import { corsair } from '@/app/lib/corsair'
 import { getSession } from '@/app/lib/session'
+
+function extractLogin(value: unknown): string | null {
+  if (typeof value !== 'object' || value === null) return null
+  const direct = (value as { login?: unknown }).login
+  if (typeof direct === 'string') return direct
+  const data = (value as { data?: unknown }).data
+  if (typeof data === 'object' && data !== null) {
+    const nested = (data as { login?: unknown }).login
+    if (typeof nested === 'string') return nested
+  }
+  return null
+}
 
 export async function GET() {
   const session = await getSession()
@@ -9,12 +21,12 @@ export async function GET() {
   }
 
   try {
-    const account = await prisma.corsairAccount.findFirst({
-      where: { tenantId: session.id },
-      select: { dek: true },
-    })
-    return NextResponse.json({ connected: account != null && account.dek != null })
+    const login = extractLogin(
+      await corsair.withTenant(session.id).github.api.users.getAuthenticated({}),
+    )
+    if (!login) throw new Error('Unexpected profile response')
+    return NextResponse.json({ connected: true, login })
   } catch {
-    return NextResponse.json({ error: 'Failed to check connection status.' }, { status: 503 })
+    return NextResponse.json({ connected: false, login: null })
   }
 }
