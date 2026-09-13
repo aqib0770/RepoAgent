@@ -2,9 +2,11 @@ import { randomBytes } from 'crypto'
 import { cookies } from 'next/headers'
 import { prisma } from './db'
 
-export const SESSION_COOKIE = 'repoagent_session'
+const SESSION_COOKIE = 'repoagent_session'
 
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
+
+const sessionSelect = { id: true, displayName: true, createdAt: true } as const
 
 export type Session = {
   id: string
@@ -19,7 +21,7 @@ export async function getSession(): Promise<Session | null> {
 
   return prisma.session.findUnique({
     where: { id: token },
-    select: { id: true, displayName: true, createdAt: true },
+    select: sessionSelect,
   })
 }
 
@@ -27,7 +29,7 @@ export async function createSession(displayName: string): Promise<Session> {
   const token = randomBytes(24).toString('base64url')
   const session = await prisma.session.create({
     data: { id: token, displayName },
-    select: { id: true, displayName: true, createdAt: true },
+    select: sessionSelect,
   })
 
   const cookieStore = await cookies()
