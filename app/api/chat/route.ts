@@ -1,5 +1,6 @@
-import { buildTenantTools, getWriteToolNames, SYSTEM_PROMPT } from '@/app/lib/ai/agent'
+import { buildTenantTools, SYSTEM_PROMPT } from '@/app/lib/ai/agent'
 import { chatModel } from '@/app/lib/ai/gateway'
+import { getEnv } from '@/app/lib/env'
 import { getSession } from '@/app/lib/session'
 import {
   convertToModelMessages,
@@ -11,13 +12,14 @@ import {
 import { NextResponse } from 'next/server'
 
 export const maxDuration = 300
+const MAX_STEPS = 15
 
 interface ChatRequestBody {
   messages?: UIMessage[]
 }
 
 export async function POST(request: Request) {
-  if (!process.env.AI_GATEWAY_API_KEY) {
+  if (!getEnv('AI_GATEWAY_API_KEY')) {
     return NextResponse.json(
       { error: 'AI_GATEWAY_API_KEY is not set. Add it to .env to enable chat.' },
       { status: 503 },
@@ -41,10 +43,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Provide "messages" in the request body.' }, { status: 400 })
   }
 
-  const tools = buildTenantTools(session.id)
+  const { tools, writeToolNames } = buildTenantTools(session.id)
 
   const toolApproval = Object.fromEntries(
-    getWriteToolNames().map((toolName) => [toolName, 'user-approval' as const]),
+    writeToolNames.map((toolName) => [toolName, 'user-approval' as const]),
   )
 
   const result = streamText({
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
     messages: await convertToModelMessages(messages),
     tools,
     toolApproval,
-    stopWhen: ({ steps }) => steps.length >= 15,
+    stopWhen: ({ steps }) => steps.length >= MAX_STEPS,
   })
 
   return createUIMessageStreamResponse({
