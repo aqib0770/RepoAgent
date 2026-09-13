@@ -31,6 +31,7 @@ function messageHasVisibleContent(message: UIMessage): boolean {
 export function ChatApp({ displayName }: { displayName: string }) {
   const router = useRouter()
   const [connected, setConnected] = useState<boolean | null>(null)
+  const [login, setLogin] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +47,10 @@ export function ChatApp({ displayName }: { displayName: string }) {
   useEffect(() => {
     fetch('/api/status')
       .then((response) => (response.ok ? response.json() : null))
-      .then((data: { connected?: boolean } | null) => setConnected(Boolean(data?.connected)))
+      .then((data: { connected?: boolean; login?: string } | null) => {
+        setConnected(Boolean(data?.connected))
+        setLogin(typeof data?.login === 'string' ? data.login : null)
+      })
       .catch(() => setConnected(false))
   }, [])
 
@@ -101,7 +105,7 @@ export function ChatApp({ displayName }: { displayName: string }) {
           ) : connected === true ? (
             <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted">
               <span className="size-1.5 rounded-full bg-accent" />
-              github
+              github{login ? ` · @${login}` : ''}
             </span>
           ) : null}
 
