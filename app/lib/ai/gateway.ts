@@ -1,5 +1,6 @@
 import { createGateway } from 'ai'
+import { optionalEnv } from '@/app/lib/env'
 
-export const gateway = createGateway()
-
-export const chatModel = gateway(process.env.AI_GATEWAY_MODEL ?? 'anthropic/claude-sonnet-4-5')
+export const chatModel = createGateway()(
+  optionalEnv('AI_GATEWAY_MODEL', 'anthropic/claude-sonnet-4-5'),
+)
