@@ -11,12 +11,20 @@ export interface CatalogEntry {
   inputSchema: Record<string, unknown>
 }
 
+// Built once per server instance; the operation catalog is static per deploy.
 let cachedCatalog: CatalogEntry[] | null = null
 
-const OPERATION_PATH = /^[\w-]+(?:\.[\w-]+)+$/
+export const OPERATION_PATH = /^[\w-]+(?:\.[\w-]+)+$/
 
-function toToolName(path: string): string {
+export function toToolName(path: string): string {
   return path.replaceAll('.', '__')
+}
+
+export function parseOperationPaths(listing: string): string[] {
+  return listing
+    .split('\n')
+    .map((line) => line.trim().replace(/^[-*\s]+/, ''))
+    .filter((line) => OPERATION_PATH.test(line))
 }
 
 function getRiskLevels(): Map<string, EndpointRiskLevel> {
@@ -26,6 +34,8 @@ function getRiskLevels(): Map<string, EndpointRiskLevel> {
     for (const endpoint of result.data.api) {
       map.set(endpoint.path, endpoint.riskLevel ?? 'read')
     }
+  } else {
+    console.warn('[registry] Failed to introspect plugin risk levels; defaulting to read-only.')
   }
   return map
 }
@@ -33,18 +43,17 @@ function getRiskLevels(): Map<string, EndpointRiskLevel> {
 export function getToolCatalog(): CatalogEntry[] {
   if (cachedCatalog) return cachedCatalog
 
-  const listing = listOperations(corsair as unknown as AnyCorsairInstance, { type: 'api' })
-  const paths = listing
-    .split('\n')
-    .map((line) => line.trim().replace(/^[-*\s]+/, ''))
-    .filter((line) => OPERATION_PATH.test(line))
-
+  const instance = corsair as unknown as AnyCorsairInstance
+  const paths = parseOperationPaths(listOperations(instance, { type: 'api' }))
   const riskLevels = getRiskLevels()
 
   const entries: CatalogEntry[] = []
   for (const path of paths) {
-    const schema = getStructuredSchema(corsair as unknown as AnyCorsairInstance, path)
-    if (!schema) continue
+    const schema = getStructuredSchema(instance, path)
+    if (!schema) {
+      console.warn(`[registry] No schema for operation ${path}; skipping.`)
+      continue
+    }
     entries.push({
       path,
       toolName: toToolName(path),
