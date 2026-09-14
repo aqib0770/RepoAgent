@@ -16,9 +16,10 @@ export function formFieldToJsonSchema(field: FormFieldSchema): Record<string, un
       base.type = 'boolean'
       break
     case 'literal':
-      base.type = typeof field.value === 'number' ? 'number' : 'boolean'
-      if (base.type === 'boolean') delete base.type
       base.const = field.value
+      if (typeof field.value === 'string') base.type = 'string'
+      else if (typeof field.value === 'number') base.type = 'number'
+      else if (typeof field.value === 'boolean') base.type = 'boolean'
       break
     case 'object': {
       base.type = 'object'

@@ -1,26 +1,13 @@
-const REQUIRED_SERVER_ENV = [
-  'DATABASE_URL',
-  'CORSAIR_KEK',
-  'CORSAIR_DEV_API_KEY',
-  'CORSAIR_DEV_SIGNING_SECRET',
-] as const
+export type RequiredServerEnv =
+  'DATABASE_URL' | 'CORSAIR_KEK' | 'CORSAIR_API_KEY' | 'CORSAIR_SIGNING_SECRET'
 
-export type RequiredServerEnv = (typeof REQUIRED_SERVER_ENV)[number]
-
-function resolveEnv(key: string): string | undefined {
-  if (key === 'CORSAIR_DEV_API_KEY') {
-    return process.env['CORSAIR_DEV_API_KEY'] ?? process.env['CORSAIR_API_KEY']
-  }
-  if (key === 'CORSAIR_DEV_SIGNING_SECRET') {
-    return process.env['CORSAIR_DEV_SIGNING_SECRET'] ?? process.env['CORSAIR_SIGNING_SECRET']
-  }
+/** Non-throwing read. */
+export function getEnv(key: RequiredServerEnv): string | undefined {
   return process.env[key]
 }
 
-export function requireEnv(
-  key: RequiredServerEnv | 'APP_URL' | 'CORSAIR_API_KEY' | 'CORSAIR_SIGNING_SECRET',
-): string {
-  const value = resolveEnv(key)
+export function requireEnv(key: RequiredServerEnv): string {
+  const value = process.env[key]
   if (!value) {
     throw new Error(
       `Missing required environment variable "${key}". Add it to .env and restart the dev server.`,
@@ -29,7 +16,6 @@ export function requireEnv(
   return value
 }
 
-export function checkEnv(): { missing: string[] } {
-  const missing = REQUIRED_SERVER_ENV.filter((key) => !resolveEnv(key))
-  return { missing }
+export function optionalEnv(key: RequiredServerEnv, fallback: string): string {
+  return process.env[key] ?? fallback
 }

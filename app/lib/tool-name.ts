@@ -12,7 +12,7 @@ const VERBS: Array<[RegExp, ToolVerb]> = [
   [/^(list|get|search|find|fetch|read|query|check|exists|download|compare|diff)/, 'read'],
   [/^(create|add|new|post|invite|request|upload|fork|star|follow|comment|react)/, 'create'],
   [/^(update|edit|set|patch|assign|rename|move|archive|unarchive|label|attach|detach)/, 'update'],
-  [/^(delete|remove|del|destroy|unfollow|unstar|dismiss)/, 'delete'],
+  [/^(delete|remove|destroy|unfollow|unstar|dismiss)/, 'delete'],
   [
     /^(merge|publish|release|close|open|reopen|lock|unlock|pin|dispatch|trigger|run|rerun|cancel|approve|enable|disable|transfer|deploy|submit)/,
     'state',
