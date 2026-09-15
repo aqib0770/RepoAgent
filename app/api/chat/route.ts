@@ -15,6 +15,7 @@ const MAX_STEPS = 15
 
 interface ChatRequestBody {
   messages?: UIMessage[]
+  think?: boolean
 }
 
 export async function POST(request: Request) {
@@ -41,16 +42,19 @@ export async function POST(request: Request) {
     writeToolNames.map((toolName) => [toolName, 'user-approval' as const]),
   )
 
+  const think = body.think !== false
+
   const result = streamText({
     model: chatModel,
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools,
     toolApproval,
+    providerOptions: { ollama: { think } },
     stopWhen: ({ steps }) => steps.length >= MAX_STEPS,
   })
 
   return createUIMessageStreamResponse({
-    stream: toUIMessageStream({ stream: result.stream, tools }),
+    stream: toUIMessageStream({ stream: result.stream, tools, sendReasoning: true }),
   })
 }
