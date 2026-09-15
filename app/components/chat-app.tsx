@@ -12,6 +12,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { LogoMark } from './logo-mark'
 import { MarkdownContent } from './markdown-content'
 import { PromptBar } from './prompt-bar'
+import { ThinkingCard } from './thinking-card'
 import { ToolCallCard } from './tool-call-card'
 
 const SUGGESTED_PROMPTS = [
@@ -24,7 +25,9 @@ const SUGGESTED_PROMPTS = [
 function messageHasVisibleContent(message: UIMessage): boolean {
   return message.parts.some(
     (part) =>
-      (part.type === 'text' && part.text.trim().length > 0) || part.type.startsWith('tool-'),
+      (part.type === 'text' && part.text.trim().length > 0) ||
+      (part.type === 'reasoning' && part.text.trim().length > 0) ||
+      part.type.startsWith('tool-'),
   )
 }
 
@@ -33,9 +36,21 @@ export function ChatApp({ displayName }: { displayName: string }) {
   const [connected, setConnected] = useState<boolean | null>(null)
   const [login, setLogin] = useState<string | null>(null)
   const [connecting, setConnecting] = useState(false)
+  const [thinkingEnabled, setThinkingEnabled] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  const transport = useMemo(() => new DefaultChatTransport<UIMessage>({ api: '/api/chat' }), [])
+  const handleToggleThinking = useCallback(() => {
+    setThinkingEnabled((value) => !value)
+  }, [])
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<UIMessage>({
+        api: '/api/chat',
+        body: { think: thinkingEnabled },
+      }),
+    [thinkingEnabled],
+  )
   const { messages, sendMessage, status, stop, error, clearError, addToolApprovalResponse } =
     useChat({
       transport,
@@ -206,6 +221,18 @@ export function ChatApp({ displayName }: { displayName: string }) {
                   if (part.type === 'text' && part.text.trim().length > 0) {
                     return <MarkdownContent key={index} content={part.text} />
                   }
+                  if (
+                    part.type === 'reasoning' &&
+                    (part.text.trim().length > 0 || part.state === 'streaming')
+                  ) {
+                    return (
+                      <ThinkingCard
+                        key={part.id ?? `reasoning-${index}`}
+                        text={part.text}
+                        state={part.state ?? 'done'}
+                      />
+                    )
+                  }
                   return null
                 })}
               </div>
@@ -229,7 +256,13 @@ export function ChatApp({ displayName }: { displayName: string }) {
       </main>
 
       <div className="pb-5 pt-1">
-        <PromptBar onSend={(text) => sendMessage({ text })} onStop={stop} busy={busy} />
+        <PromptBar
+          onSend={(text) => sendMessage({ text })}
+          onStop={stop}
+          busy={busy}
+          thinkingEnabled={thinkingEnabled}
+          onToggleThinking={handleToggleThinking}
+        />
       </div>
     </div>
   )
