@@ -11,7 +11,6 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.35",
     "@ai-sdk/react": "^4.0.76",
     "@corsair-dev/github": "^0.1.15",
     "@prisma/adapter-pg": "^7.9.1",
@@ -20,6 +19,7 @@
     "corsair": "^0.1.114",
     "dotenv": "^17.4.2",
     "next": "16.3.0",
+    "ollama-ai-provider-v2": "^4.0.1",
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
