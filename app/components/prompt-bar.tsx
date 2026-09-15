@@ -6,9 +6,17 @@ type PromptBarProps = {
   onSend: (text: string) => void
   onStop: () => void
   busy: boolean
+  thinkingEnabled: boolean
+  onToggleThinking: () => void
 }
 
-export function PromptBar({ onSend, onStop, busy }: PromptBarProps) {
+export function PromptBar({
+  onSend,
+  onStop,
+  busy,
+  thinkingEnabled,
+  onToggleThinking,
+}: PromptBarProps) {
   const [text, setText] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -80,9 +88,24 @@ export function PromptBar({ onSend, onStop, busy }: PromptBarProps) {
         <span className="text-[11px] text-faint">
           Enter to send · Shift+Enter for newline · writes are confirmed first
         </span>
-        <span className="hidden font-mono text-[11px] text-faint sm:block">
-          github connected via corsair
-        </span>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onToggleThinking}
+            disabled={busy}
+            title={thinkingEnabled ? 'Disable model thinking (faster)' : 'Enable model thinking'}
+            aria-pressed={thinkingEnabled}
+            className="flex items-center gap-1.5 rounded-full border border-line px-2 py-0.5 font-mono text-[11px] text-faint transition-colors hover:border-accent/40 hover:text-muted disabled:opacity-50"
+          >
+            <span
+              className={`size-1.5 rounded-full ${thinkingEnabled ? 'bg-accent' : 'bg-faint'}`}
+            />
+            thinking {thinkingEnabled ? 'on' : 'off'}
+          </button>
+          <span className="hidden font-mono text-[11px] text-faint sm:block">
+            github connected via corsair
+          </span>
+        </div>
       </div>
     </div>
   )
